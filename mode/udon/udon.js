@@ -86,8 +86,14 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   var hrRE = /^([*\-_])(?:\s*\1){2,}\s*$/
   ,   listRE = /^(?:[*\-+]|^[0-9]+([.)]))\s+/
   ,   taskListRE = /^\[(x| )\](?=\s)/i // Must follow listRE
+/* ~udon toss
   ,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: |$)/
   ,   setextHeaderRE = /^ *(?:\={1,}|-{1,})\s*$/
+*/
+/* ~udon start */
+  ,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: (?! ))/ // single space
+  ,   setextHeaderRE = /(?!)/ // matches nothing
+/* ~udon end */
   ,   textRE = /^[^#!\[\]*_\\<>` "'(~:]+/
   ,   fencedCodeRE = /^(~~~+|```+)[ \t]*([\w+#-]*)[^\n`]*$/
   ,   linkDefRE = /^\s*\[[^\]]+?\]:.*$/ // naive link-definition
@@ -205,7 +211,12 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       return tokenTypes.code;
     } else if (stream.eatSpace()) {
       return null;
+/* ~udon toss
     } else if (firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(atxHeaderRE)) && match[1].length <= 6) {
+*/
+/* ~udon start */
+    } else if (stream.column() == 0 && state.indentation <= maxNonCodeIndentation && (match = stream.match(atxHeaderRE)) && match[1].length <= 6) {
+/* ~udon end */
       state.quote = 0;
       state.header = match[1].length;
       state.thisLine.header = true;
@@ -560,7 +571,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       return "tag";
     } else if (ch === "*" || ch === "_") {
       var len = 1, before = stream.pos == 1 ? " " : stream.string.charAt(stream.pos - 2)
-/* ~udon
+/* ~udon toss
       while (len < 3 && stream.eat(ch)) len++
 */
       var after = stream.peek() || " "
@@ -568,7 +579,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       var leftFlanking = !/\s/.test(after) && (!punctuation.test(after) || /\s/.test(before) || punctuation.test(before))
       var rightFlanking = !/\s/.test(before) && (!punctuation.test(before) || /\s/.test(after) || punctuation.test(after))
       var setEm = null, setStrong = null
-/* ~udon
+/* ~udon toss
       if (len % 2) { // Em
         if (!state.em && leftFlanking && (ch === "*" || !rightFlanking || punctuation.test(before)))
           setEm = true
