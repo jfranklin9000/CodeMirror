@@ -84,7 +84,12 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   }
 
   var hrRE = /^([*\-_])(?:\s*\1){2,}\s*$/
+/* ~udon toss
   ,   listRE = /^(?:[*\-+]|^[0-9]+([.)]))\s+/
+*/
+/* ~udon start (don't use * as list item) */
+  ,   listRE = /^(?:[\-+]|^[0-9]+([.)]))\s+/
+/* ~udon end */
   ,   taskListRE = /^\[(x| )\](?=\s)/i // Must follow listRE
 /* ~udon toss
   ,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: |$)/
