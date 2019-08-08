@@ -83,7 +83,12 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     }
   }
 
+/* ~udon toss
   var hrRE = /^([*\-_])(?:\s*\1){2,}\s*$/
+*/
+/* ~udon start (don't use * or _ as horizontal rule) */
+  var hrRE = /^(\-)(?:\s*\1){2,}\s*$/
+/* ~udon end */
 /* ~udon toss
   ,   listRE = /^(?:[*\-+]|^[0-9]+([.)]))\s+/
 */
