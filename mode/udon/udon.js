@@ -137,6 +137,8 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     state.em = false;
     // Reset STRONG state
     state.strong = false;
+    // Reset latestEmOrStrong state
+    state.latestEmOrStrong = null; // ~udon
     // Reset strikethrough state
     state.strikethrough = false;
     // Reset state.quote
@@ -183,6 +185,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         // Reset inline styles which shouldn't propagate aross list items
         state.em = false;
         state.strong = false;
+        state.latestEmOrStrong = null; // ~udon
         state.code = false;
         state.strikethrough = false;
 
@@ -582,16 +585,14 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       state.md_inside = false;
       return "tag";
     } else if (ch === "*" || ch === "_") {
-      var len = 1, before = stream.pos == 1 ? " " : stream.string.charAt(stream.pos - 2)
 /* ~udon toss
+      var len = 1, before = stream.pos == 1 ? " " : stream.string.charAt(stream.pos - 2)
       while (len < 3 && stream.eat(ch)) len++
-*/
       var after = stream.peek() || " "
       // See http://spec.commonmark.org/0.27/#emphasis-and-strong-emphasis
       var leftFlanking = !/\s/.test(after) && (!punctuation.test(after) || /\s/.test(before) || punctuation.test(before))
       var rightFlanking = !/\s/.test(before) && (!punctuation.test(before) || /\s/.test(after) || punctuation.test(after))
       var setEm = null, setStrong = null
-/* ~udon toss
       if (len % 2) { // Em
         if (!state.em && leftFlanking && (ch === "*" || !rightFlanking || punctuation.test(before)))
           setEm = true
@@ -604,21 +605,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         else if (state.strong == ch && rightFlanking && (ch === "*" || !leftFlanking || punctuation.test(after)))
           setStrong = false
       }
-*/
-/* ~udon start */
-      if (ch === "_") { // Em
-        if (!state.em && leftFlanking && (/* ch === "*" || */ !rightFlanking || punctuation.test(before)))
-          setEm = true
-        else if (state.em == ch && rightFlanking && (/* ch === "*" || */ !leftFlanking || punctuation.test(after)))
-          setEm = false
-      }
-      if (ch === "*") { // Strong
-        if (!state.strong && leftFlanking && (/* ch === "*" || */ !rightFlanking || punctuation.test(before)))
-          setStrong = true
-        else if (state.strong == ch && rightFlanking && (/* ch === "*" || */ !leftFlanking || punctuation.test(after)))
-          setStrong = false
-      }
-/* ~udon end */
       if (setStrong != null || setEm != null) {
         if (modeCfg.highlightFormatting) state.formatting = setEm == null ? "strong" : setStrong == null ? "em" : "strong em"
         if (setEm === true) state.em = ch
@@ -628,6 +614,32 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         if (setStrong === false) state.strong = false
         return t
       }
+~udon toss */
+// ~udon start
+      var setEm = null, setStrong = null
+      if (ch === "_") setEm = !state.em // Em
+      else setStrong = !state.strong // Strong
+      // modeCfg.highlightFormatting (which is not enabled) may not be correct here (just move it down?)
+      if (modeCfg.highlightFormatting)
+        state.formatting = setEm == null ? "strong" : setStrong == null ? "em" : "strong em"
+      if (setEm === true) {
+        state.em = true
+        state.lastEmOrStrong = tokenTypes.em
+      } else if (setEm === false) {
+        state.em = false
+        if (state.lastEmOrStrong == tokenTypes.strong)
+          state.strong = false // turn strong off too
+      }
+      if (setStrong === true) {
+        state.strong = true
+        state.lastEmOrStrong = tokenTypes.strong
+      } else if (setStrong === false) {
+        state.strong = false
+        if (state.lastEmOrStrong == tokenTypes.em)
+          state.em = false // turn em off too
+      }
+      return getType(state)
+// ~udon end
     } else if (ch === ' ') {
       if (stream.eat('*') || stream.eat('_')) { // Probably surrounded by spaces
         if (stream.peek() === ' ') { // Surrounded by spaces, ignore
@@ -802,6 +814,8 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         code: 0,
         em: false,
         strong: false,
+        // most recent tokenTypes.em or tokenTypes.strong
+        latestEmOrStrong: null, // ~udon
         header: 0,
         setext: 0,
         hr: false,
@@ -840,6 +854,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         code: s.code,
         em: s.em,
         strong: s.strong,
+        latestEmOrStrong: s.latestEmOrStrong, // ~udon
         strikethrough: s.strikethrough,
         emoji: s.emoji,
         header: s.header,
