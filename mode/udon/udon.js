@@ -103,7 +103,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 /* ~udon start */
 //  ,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: (?! ))/ // single space
 // no, the udon parser allows multiple spaces
-  ,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: |$)/
+  ,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: )/ // at least one space
   ,   setextHeaderRE = /(?!)/ // matches nothing
 /* ~udon end */
   ,   textRE = /^[^#!\[\]*_\\<>` "'(~:]+/
