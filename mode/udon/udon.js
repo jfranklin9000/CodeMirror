@@ -137,8 +137,8 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     state.em = false;
     // Reset STRONG state
     state.strong = false;
-    // Reset latestEmOrStrong state
-    state.latestEmOrStrong = null; // ~udon
+    // Reset lastEmOrStrong state
+    state.lastEmOrStrong = null; // ~udon
     // Reset strikethrough state
     state.strikethrough = false;
     // Reset state.quote
@@ -185,7 +185,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         // Reset inline styles which shouldn't propagate aross list items
         state.em = false;
         state.strong = false;
-        state.latestEmOrStrong = null; // ~udon
+        state.lastEmOrStrong = null; // ~udon
         state.code = false;
         state.strikethrough = false;
 
@@ -815,7 +815,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         em: false,
         strong: false,
         // most recent tokenTypes.em or tokenTypes.strong
-        latestEmOrStrong: null, // ~udon
+        lastEmOrStrong: null, // ~udon
         header: 0,
         setext: 0,
         hr: false,
@@ -854,7 +854,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         code: s.code,
         em: s.em,
         strong: s.strong,
-        latestEmOrStrong: s.latestEmOrStrong, // ~udon
+        lastEmOrStrong: s.lastEmOrStrong, // ~udon
         strikethrough: s.strikethrough,
         emoji: s.emoji,
         header: s.header,
