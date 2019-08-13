@@ -129,6 +129,8 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   // Blocks
 
   function blankLine(state) {
+    // Reset udonParseError state
+    state.udonParseError = false; // ~udon
     // Reset linkTitle state
     state.linkTitle = false;
     state.linkHref = false;
@@ -226,12 +228,10 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       return tokenTypes.code;
     } else if (stream.eatSpace()) {
       return null;
-/* ~udon toss
-    } else if (firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(atxHeaderRE)) && match[1].length <= 6) {
-*/
-/* ~udon start */
-    } else if (stream.column() == 0 && state.indentation <= maxNonCodeIndentation && (match = stream.match(atxHeaderRE)) && match[1].length <= 6) {
-/* ~udon end */
+// ~udon
+//  } else if (firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(atxHeaderRE)) && match[1].length <= 6) {
+    } else if (firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(atxHeaderRE))) {
+      state.udonParseError = (stream.column() != 0) || (match[1].length > 6); // ~udon - XX what about indentation?
       state.quote = 0;
       state.header = match[1].length;
       state.thisLine.header = true;
@@ -347,6 +347,10 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   // Inline
   function getType(state) {
     var styles = [];
+
+    // ~udon
+    if (state.udonParseError)
+      styles.push("error");
 
     if (state.formatting) {
       styles.push(tokenTypes.formatting);
@@ -800,6 +804,9 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         prevLine: {stream: null},
         thisLine: {stream: null},
 
+        // udon parser will error and not produce output
+        udonParseError: false, // ~udon
+
         block: blockNormal,
         htmlState: null,
         indentation: 0,
@@ -837,6 +844,8 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 
         prevLine: s.prevLine,
         thisLine: s.thisLine,
+
+        udonParseError: s.udonParseError, // ~udon
 
         block: s.block,
         htmlState: s.htmlState && CodeMirror.copyState(htmlMode, s.htmlState),
