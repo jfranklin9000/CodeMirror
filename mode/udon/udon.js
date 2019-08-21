@@ -35,10 +35,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   if (modeCfg.maxBlockquoteDepth === undefined)
     modeCfg.maxBlockquoteDepth = 0;
 
-  // Turn on strikethrough syntax
-  if (modeCfg.strikethrough === undefined)
-    modeCfg.strikethrough = false;
-
   if (modeCfg.emoji === undefined)
     modeCfg.emoji = false;
 
@@ -70,7 +66,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     linkHref: "string",
     em: "em",
     strong: "strong",
-    strikethrough: "strikethrough",
     emoji: "builtin"
   };
 
@@ -136,8 +131,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     state.strong = false;
     // Reset lastEmOrStrong state
     state.lastEmOrStrong = null; // ~udon
-    // Reset strikethrough state
-    state.strikethrough = false;
     // Reset state.quote
     state.quote = 0;
     // Reset state.indentedCode
@@ -184,7 +177,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         state.strong = false;
         state.lastEmOrStrong = null; // ~udon
         state.code = false;
-        state.strikethrough = false;
 
         state.list = null;
         // While this list item's marker's indentation is less than the deepest
@@ -373,7 +365,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     } else { // Only apply inline styles to non-url text
       if (state.strong) { styles.push(tokenTypes.strong); }
       if (state.em) { styles.push(tokenTypes.em); }
-      if (state.strikethrough) { styles.push(tokenTypes.strikethrough); }
       if (state.emoji) { styles.push(tokenTypes.emoji); }
       if (state.linkText) { styles.push(tokenTypes.linkText); }
       if (state.code) { styles.push(tokenTypes.code); }
@@ -626,29 +617,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       }
     }
 
-    if (modeCfg.strikethrough) {
-      if (ch === '~' && stream.eatWhile(ch)) {
-        if (state.strikethrough) {// Remove strikethrough
-          if (modeCfg.highlightFormatting) state.formatting = "strikethrough";
-          var t = getType(state);
-          state.strikethrough = false;
-          return t;
-        } else if (stream.match(/^[^\s]/, false)) {// Add strikethrough
-          state.strikethrough = true;
-          if (modeCfg.highlightFormatting) state.formatting = "strikethrough";
-          return getType(state);
-        }
-      } else if (ch === ' ') {
-        if (stream.match(/^~~/, true)) { // Probably surrounded by space
-          if (stream.peek() === ' ') { // Surrounded by spaces, ignore
-            return getType(state);
-          } else { // Not surrounded by spaces, back up pointer
-            stream.backUp(2);
-          }
-        }
-      }
-    }
-
     if (modeCfg.emoji && ch === ":" && stream.match(/^(?:[a-z_\d+][a-z_\d+-]*|\-[a-z_\d+][a-z_\d+-]*):/)) {
       state.emoji = true;
       if (modeCfg.highlightFormatting) state.formatting = "emoji";
@@ -803,7 +771,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         quote: 0,
         trailingSpace: 0,
         trailingSpaceNewLine: false,
-        strikethrough: false,
         emoji: false,
         fencedEndRE: null
       };
@@ -835,7 +802,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         em: s.em,
         strong: s.strong,
         lastEmOrStrong: s.lastEmOrStrong, // ~udon
-        strikethrough: s.strikethrough,
         emoji: s.emoji,
         header: s.header,
         setext: s.setext,
