@@ -278,8 +278,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       state.hr = true;
       state.thisLine.hr = true;
       return tokenTypes.hr;
-    } else if (stream.peek() === '[') {
-      return switchInline(stream, state, footnoteLink);
     }
 
     return switchInline(stream, state, state.inline);
@@ -679,48 +677,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       state.linkHref = true;
       return getType(state);
     };
-  }
-
-  function footnoteLink(stream, state) {
-    if (stream.match(/^([^\]\\]|\\.)*\]:/, false)) {
-      state.f = footnoteLinkInside;
-      stream.next(); // Consume [
-      if (modeCfg.highlightFormatting) state.formatting = "link";
-      state.linkText = true;
-      return getType(state);
-    }
-    return switchInline(stream, state, inlineNormal);
-  }
-
-  function footnoteLinkInside(stream, state) {
-    if (stream.match(/^\]:/, true)) {
-      state.f = state.inline = footnoteUrl;
-      if (modeCfg.highlightFormatting) state.formatting = "link";
-      var returnType = getType(state);
-      state.linkText = false;
-      return returnType;
-    }
-
-    stream.match(/^([^\]\\]|\\.)+/, true);
-
-    return tokenTypes.linkText;
-  }
-
-  function footnoteUrl(stream, state) {
-    // Check if space, and return NULL if so (to avoid marking the space)
-    if(stream.eatSpace()){
-      return null;
-    }
-    // Match URL
-    stream.match(/^[^\s]+/, true);
-    // Check for link title
-    if (stream.peek() === undefined) { // End of line, set flag to check next line
-      state.linkTitle = true;
-    } else { // More content on line, check if link title
-      stream.match(/^(?:\s+(?:"(?:[^"\\]|\\\\|\\.)+"|'(?:[^'\\]|\\\\|\\.)+'|\((?:[^)\\]|\\\\|\\.)+\)))?/, true);
-    }
-    state.f = state.inline = inlineNormal;
-    return tokenTypes.linkHref + " url";
   }
 
   var mode = {
