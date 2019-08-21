@@ -75,21 +75,28 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   var
       // changed - don't use * or _ as horizontal rule
 //    hrRE = /^([*\-_])(?:\s*\1){2,}\s*$/ // markdown
-      hrRE = /^(\-)(?:\s*\1){2,}\s*$/
+      hrRE = /^(\-)(?:\s*\1){2,}\s*$/     // udon
+      //
       // changed - don't use * as list item
 //,   listRE = /^(?:[*\-+]|^[0-9]+([.)]))\s+/ // markdown
-  ,   listRE = /^(?:[\-+]|^[0-9]+([.)]))\s+/
+  ,   listRE = /^(?:[\-+]|^[0-9]+([.)]))\s+/  // udon
+      //
       // changed - require at least one space to be a header
-//,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: |$)/ // markdown
-//,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: (?! ))/ // only one space
-  ,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: )/ // at least one space
+//,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: |$)/    // markdown
+//,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: (?! ))/ // udon - only one space
+  ,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: )/      // udon - at least one space
+      //
       // changed - don't allow === or --- to headerize the previous line
 //,   setextHeaderRE = /^ *(?:\={1,}|-{1,})\s*$/ // markdown
-  ,   setextHeaderRE = /(?!)/ // matches nothing
+  ,   setextHeaderRE = /(?!)/                    // udon - matches nothing
+      //
       // no change
   ,   textRE = /^[^#!\[\]*_\\<>` "'(~:]+/
-      // no change yet - don't allow ~~~/tabs/spaces for code fencing
-  ,   fencedCodeRE = /^(~~~+|```+)[ \t]*([\w+#-]*)[^\n`]*$/
+      //
+      // changed - don't allow ~~~ for code fencing
+//,   fencedCodeRE = /^(~~~+|```+)[ \t]*([\w+#-]*)[^\n`]*$/ // markdown
+  ,   fencedCodeRE = /^(```)(.*)$/                          // udon - match more than ``` so we can error on ```json
+      //
       // no change
   ,   linkDefRE = /^\s*\[[^\]]+?\]:.*$/ // naive link-definition
       // no change
@@ -240,8 +247,10 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       if (modeCfg.highlightFormatting) state.formatting = ["list", "list-" + listType];
       return getType(state);
     } else if (firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(fencedCodeRE, true))) {
+      state.udonParseError = (stream.column() != 0) || (match[2].length > 0); // ~udon - XX what about indentation?
       state.quote = 0;
-      state.fencedEndRE = new RegExp(match[1] + "+ *$");
+//    state.fencedEndRE = new RegExp(match[1] + "+ *$"); // markdown
+      state.fencedEndRE = fencedCodeRE;                  // udon
       // try switching mode
       state.localMode = modeCfg.fencedCodeBlockHighlighting && getMode(match[2]);
       if (state.localMode) state.localState = CodeMirror.startState(state.localMode);
@@ -302,7 +311,10 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     var currListInd = state.listStack[state.listStack.length - 1] || 0;
     var hasExitedList = state.indentation < currListInd;
     var maxFencedEndInd = currListInd + 3;
-    if (state.fencedEndRE && state.indentation <= maxFencedEndInd && (hasExitedList || stream.match(state.fencedEndRE))) {
+    var match; // ~udon
+//  if (state.fencedEndRE && state.indentation <= maxFencedEndInd && (hasExitedList || stream.match(state.fencedEndRE))) {
+    if (state.fencedEndRE && state.indentation <= maxFencedEndInd && (hasExitedList || (match = stream.match(state.fencedEndRE)))) { // ~udon
+      state.udonParseError = (stream.column() != 0) || (match[2].length > 0); // ~udon - XX what about indentation? hasExitedList?
       if (modeCfg.highlightFormatting) state.formatting = "code-block";
       var returnType;
       if (!hasExitedList) returnType = getType(state)
