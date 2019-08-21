@@ -35,9 +35,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   if (modeCfg.maxBlockquoteDepth === undefined)
     modeCfg.maxBlockquoteDepth = 0;
 
-  // Turn on task lists? ("- [ ] " and "- [x] ")
-  if (modeCfg.taskLists === undefined) modeCfg.taskLists = false;
-
   // Turn on strikethrough syntax
   if (modeCfg.strikethrough === undefined)
     modeCfg.strikethrough = false;
@@ -91,8 +88,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       // changed - don't use * as list item
 //,   listRE = /^(?:[*\-+]|^[0-9]+([.)]))\s+/ // markdown
   ,   listRE = /^(?:[\-+]|^[0-9]+([.)]))\s+/
-      // no change, but not used
-  ,   taskListRE = /^\[(x| )\](?=\s)/i // Must follow listRE
       // changed - require at least one space to be a header
 //,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: |$)/ // markdown
 //,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: (?! ))/ // only one space
@@ -253,9 +248,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       // Add this list item's content's indentation to the stack
       state.listStack.push(state.indentation);
 
-      if (modeCfg.taskLists && stream.match(taskListRE, false)) {
-        state.taskList = true;
-      }
       state.f = state.inline;
       if (modeCfg.highlightFormatting) state.formatting = ["list", "list-" + listType];
       return getType(state);
@@ -376,15 +368,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       }
     }
 
-    if (state.taskOpen) {
-      styles.push("meta");
-      return styles.length ? styles.join(' ') : null;
-    }
-    if (state.taskClosed) {
-      styles.push("property");
-      return styles.length ? styles.join(' ') : null;
-    }
-
     if (state.linkHref) {
       styles.push(tokenTypes.linkHref, "url");
     } else { // Only apply inline styles to non-url text
@@ -449,18 +432,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       state.list = null;
       return getType(state);
     }
-
-    if (state.taskList) {
-      var taskOpen = stream.match(taskListRE, true)[1] === " ";
-      if (taskOpen) state.taskOpen = true;
-      else state.taskClosed = true;
-      if (modeCfg.highlightFormatting) state.formatting = "task";
-      state.taskList = false;
-      return getType(state);
-    }
-
-    state.taskOpen = false;
-    state.taskClosed = false;
 
     if (state.header && stream.match(/^#+$/, true)) {
       if (modeCfg.highlightFormatting) state.formatting = "header";
@@ -827,7 +798,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         header: 0,
         setext: 0,
         hr: false,
-        taskList: false,
         list: false,
         listStack: [],
         quote: 0,
@@ -870,7 +840,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         header: s.header,
         setext: s.setext,
         hr: s.hr,
-        taskList: s.taskList,
         list: s.list,
         listStack: s.listStack.slice(0),
         quote: s.quote,
@@ -898,9 +867,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 
         state.prevLine = state.thisLine
         state.thisLine = {stream: stream}
-
-        // Reset state.taskList
-        state.taskList = false;
 
         // Reset state.trailingSpace
         state.trailingSpace = 0;
