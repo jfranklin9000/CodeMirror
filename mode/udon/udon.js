@@ -35,9 +35,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   if (modeCfg.maxBlockquoteDepth === undefined)
     modeCfg.maxBlockquoteDepth = 0;
 
-  if (modeCfg.emoji === undefined)
-    modeCfg.emoji = false;
-
   if (modeCfg.fencedCodeBlockHighlighting === undefined)
     modeCfg.fencedCodeBlockHighlighting = true;
 
@@ -65,8 +62,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     linkText: "link",
     linkHref: "string",
     em: "em",
-    strong: "strong",
-    emoji: "builtin"
+    strong: "strong"
   };
 
   for (var tokenType in tokenTypes) {
@@ -365,7 +361,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     } else { // Only apply inline styles to non-url text
       if (state.strong) { styles.push(tokenTypes.strong); }
       if (state.em) { styles.push(tokenTypes.em); }
-      if (state.emoji) { styles.push(tokenTypes.emoji); }
       if (state.linkText) { styles.push(tokenTypes.linkText); }
       if (state.code) { styles.push(tokenTypes.code); }
       if (state.image) { styles.push(tokenTypes.image); }
@@ -617,14 +612,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       }
     }
 
-    if (modeCfg.emoji && ch === ":" && stream.match(/^(?:[a-z_\d+][a-z_\d+-]*|\-[a-z_\d+][a-z_\d+-]*):/)) {
-      state.emoji = true;
-      if (modeCfg.highlightFormatting) state.formatting = "emoji";
-      var retType = getType(state);
-      state.emoji = false;
-      return retType;
-    }
-
     if (ch === ' ') {
       if (stream.match(/^ +$/, false)) {
         state.trailingSpace++;
@@ -771,7 +758,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         quote: 0,
         trailingSpace: 0,
         trailingSpaceNewLine: false,
-        emoji: false,
         fencedEndRE: null
       };
     },
@@ -802,7 +788,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         em: s.em,
         strong: s.strong,
         lastEmOrStrong: s.lastEmOrStrong, // ~udon
-        emoji: s.emoji,
         header: s.header,
         setext: s.setext,
         hr: s.hr,
