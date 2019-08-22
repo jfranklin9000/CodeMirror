@@ -13,9 +13,6 @@
 
 CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 
-  var htmlMode = CodeMirror.getMode(cmCfg, "text/html");
-  var htmlModeMissing = htmlMode.name == "null"
-
   function getMode(name) {
     if (CodeMirror.findModeByName) {
       var found = CodeMirror.findModeByName(name);
@@ -37,9 +34,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 
   if (modeCfg.fencedCodeBlockHighlighting === undefined)
     modeCfg.fencedCodeBlockHighlighting = true;
-
-  if (modeCfg.xml === undefined)
-    modeCfg.xml = true;
 
   // Allow token types to be overridden by user-provided token types.
   if (modeCfg.tokenTypeOverrides === undefined)
@@ -138,19 +132,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     state.quote = 0;
     // Reset state.indentedCode
     state.indentedCode = false;
-    if (state.f == htmlBlock) {
-      var exit = htmlModeMissing
-      if (!exit) {
-        var inner = CodeMirror.innerMode(htmlMode, state.htmlState)
-        exit = inner.mode.name == "xml" && inner.state.tagStart === null &&
-          (!inner.state.context && inner.state.tokenize.isInText)
-      }
-      if (exit) {
-        state.f = inlineNormal;
-        state.block = blockNormal;
-        state.htmlState = null;
-      }
-    }
     // Reset state.trailingSpace
     state.trailingSpace = 0;
     state.trailingSpaceNewLine = false;
@@ -290,21 +271,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     }
 
     return switchInline(stream, state, state.inline);
-  }
-
-  function htmlBlock(stream, state) {
-    var style = htmlMode.token(stream, state.htmlState);
-    if (!htmlModeMissing) {
-      var inner = CodeMirror.innerMode(htmlMode, state.htmlState)
-      if ((inner.mode.name == "xml" && inner.state.tagStart === null &&
-           (!inner.state.context && inner.state.tokenize.isInText)) ||
-          (state.md_inside && stream.current().indexOf(">") > -1)) {
-        state.f = inlineNormal;
-        state.block = blockNormal;
-        state.htmlState = null;
-      }
-    }
-    return style;
   }
 
   function local(stream, state) {
@@ -542,21 +508,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       return type + tokenTypes.linkEmail;
     }
 
-    if (modeCfg.xml && ch === '<' && stream.match(/^(!--|\?|!\[CDATA\[|[a-z][a-z0-9-]*(?:\s+[a-z_:.\-]+(?:\s*=\s*[^>]+)?)*\s*(?:>|$))/i, false)) {
-      var end = stream.string.indexOf(">", stream.pos);
-      if (end != -1) {
-        var atts = stream.string.substring(stream.start, end);
-        if (/markdown\s*=\s*('|"){0,1}1('|"){0,1}/.test(atts)) state.md_inside = true;
-      }
-      stream.backUp(1);
-      state.htmlState = CodeMirror.startState(htmlMode);
-      return switchBlock(stream, state, htmlBlock);
-    }
-
-    if (modeCfg.xml && ch === '<' && stream.match(/^\/\w*?>/)) {
-      state.md_inside = false;
-      return "tag";
-    } else if (ch === "*" || ch === "_") {
+    if (ch === "*" || ch === "_") {
 /* ~udon toss
       var len = 1, before = stream.pos == 1 ? " " : stream.string.charAt(stream.pos - 2)
       while (len < 3 && stream.eat(ch)) len++
@@ -703,7 +655,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         udonParseError: false, // ~udon
 
         block: blockNormal,
-        htmlState: null,
         indentation: 0,
 
         inline: inlineNormal,
@@ -740,7 +691,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         udonParseError: s.udonParseError, // ~udon
 
         block: s.block,
-        htmlState: s.htmlState && CodeMirror.copyState(htmlMode, s.htmlState),
         indentation: s.indentation,
 
         localMode: s.localMode,
@@ -765,7 +715,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         indentedCode: s.indentedCode,
         trailingSpace: s.trailingSpace,
         trailingSpaceNewLine: s.trailingSpaceNewLine,
-        md_inside: s.md_inside,
         fencedEndRE: s.fencedEndRE
       };
     },
@@ -793,7 +742,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 
         if (!state.localState) {
           state.f = state.block;
-          if (state.f != htmlBlock) {
+          if (true) {
             var indentation = stream.match(/^\s*/, true)[0].replace(/\t/g, expandedTab).length;
             state.indentation = indentation;
             state.indentationDiff = null;
@@ -805,13 +754,11 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     },
 
     innerMode: function(state) {
-      if (state.block == htmlBlock) return {state: state.htmlState, mode: htmlMode};
       if (state.localState) return {state: state.localState, mode: state.localMode};
       return {state: state, mode: mode};
     },
 
     indent: function(state, textAfter, line) {
-      if (state.block == htmlBlock && htmlMode.indent) return htmlMode.indent(state.htmlState, textAfter, line)
       if (state.localState && state.localMode.indent) return state.localMode.indent(state.localState, textAfter, line)
       return CodeMirror.Pass
     },
