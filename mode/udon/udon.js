@@ -63,10 +63,10 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 //,   listRE = /^(?:[*\-+]|^[0-9]+([.)]))\s+/ // markdown
   ,   listRE = /^(?:[\-+]|^[0-9]+([.)]))\s+/  // udon
       //
-      // changed - require at least one space to be a header
-//,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: |$)/    // markdown
-//,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: (?! ))/ // udon - only one space
-  ,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: )/      // udon - at least one space
+      // changed - require at least one space to be a header, and hax newline is not a header
+//,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: |$)/ // markdown
+//,   atxHeaderRE = /^(#+)(?: (?! ))/                                             // udon - only one space
+  ,   atxHeaderRE = /^(#+)(?: )/                                                  // udon - at least one space
       //
       // no change
   ,   textRE = /^[^#!\[\]*_\\<>` "'(~:]+/
