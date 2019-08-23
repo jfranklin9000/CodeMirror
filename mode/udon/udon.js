@@ -39,8 +39,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     imageAltText: "image-alt-text",
     imageMarker: "image-marker",
     formatting: "formatting",
-    linkInline: "link",
-    linkEmail: "link",
     linkText: "link",
     linkHref: "string",
     em: "em",
@@ -415,30 +413,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       return type;
     }
 
-    if (ch === '<' && stream.match(/^(https?|ftps?):\/\/(?:[^\\>]|\\.)+>/, false)) {
-      state.f = state.inline = linkInline;
-      if (modeCfg.highlightFormatting) state.formatting = "link";
-      var type = getType(state);
-      if (type){
-        type += " ";
-      } else {
-        type = "";
-      }
-      return type + tokenTypes.linkInline;
-    }
-
-    if (ch === '<' && stream.match(/^[^> \\]+@(?:[^\\>]|\\.)+>/, false)) {
-      state.f = state.inline = linkInline;
-      if (modeCfg.highlightFormatting) state.formatting = "link";
-      var type = getType(state);
-      if (type){
-        type += " ";
-      } else {
-        type = "";
-      }
-      return type + tokenTypes.linkEmail;
-    }
-
     if (ch === "*" || ch === "_") {
 // ~udon start
       var setEm = null, setStrong = null
@@ -484,26 +458,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     }
 
     return getType(state);
-  }
-
-  function linkInline(stream, state) {
-    var ch = stream.next();
-
-    if (ch === ">") {
-      state.f = state.inline = inlineNormal;
-      if (modeCfg.highlightFormatting) state.formatting = "link";
-      var type = getType(state);
-      if (type){
-        type += " ";
-      } else {
-        type = "";
-      }
-      return type + tokenTypes.linkInline;
-    }
-
-    stream.match(/^[^>]+/, true);
-
-    return tokenTypes.linkInline;
   }
 
   function linkHref(stream, state) {
