@@ -101,9 +101,9 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   function blankLine(state) {
     // Reset udonParseError state
     state.udonParseError = false; // ~udon
-    // Reset linkTitle state
-    state.linkTitle = false;
+    // Reset linkHref state
     state.linkHref = false;
+     // Reset linkText state
     state.linkText = false;
     // Reset EM state
     state.em = false;
@@ -349,20 +349,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     }
 
     var ch = stream.next();
-
-    // Matches link titles present on next line
-    if (state.linkTitle) {
-      state.linkTitle = false;
-      var matchCh = ch;
-      if (ch === '(') {
-        matchCh = ')';
-      }
-      matchCh = (matchCh+'').replace(/([.?*+^\[\]\\(){}|-])/g, "\\$1");
-      var regex = '^\\s*(?:[^' + matchCh + '\\\\]+|\\\\\\\\|\\\\.)' + matchCh;
-      if (stream.match(new RegExp(regex), true)) {
-        return tokenTypes.linkHref;
-      }
-    }
 
     // If this block is changed, it may need to be updated in GFM mode
     if (ch === '`') {
@@ -611,7 +597,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         formatting: false,
         linkText: false,
         linkHref: false,
-        linkTitle: false,
         code: 0,
         em: false,
         strong: false,
@@ -644,7 +629,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         text: s.text,
         formatting: false,
         linkText: s.linkText,
-        linkTitle: s.linkTitle,
         linkHref: s.linkHref,
         code: s.code,
         em: s.em,
