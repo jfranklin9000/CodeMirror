@@ -59,9 +59,9 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 //    hrRE = /^([*\-_])(?:\s*\1){2,}\s*$/ // markdown
       hrRE = /^(\-)(?:\s*\1){2,}\s*$/     // udon
       //
-      // changed - don't use * as list item
+      // changed - don't use * or 1. as list item
 //,   listRE = /^(?:[*\-+]|^[0-9]+([.)]))\s+/ // markdown
-  ,   listRE = /^(?:[\-+]|^[0-9]+([.)]))\s+/  // udon
+  ,   listRE = /^(?:[\-+])\s+/                // udon
       //
       // changed - require at least one space to be a header, and hax newline is not a header
 //,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: |$)/ // markdown
