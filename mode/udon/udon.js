@@ -13,15 +13,6 @@
 
 CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 
-  function getMode(name) {
-    if (CodeMirror.findModeByName) {
-      var found = CodeMirror.findModeByName(name);
-      if (found) name = found.mime || found.mimes[0];
-    }
-    var mode = CodeMirror.getMode(cmCfg, name);
-    return mode.name == "null" ? null : mode;
-  }
-
   // Should characters that affect highlighting be highlighted separate?
   // Does not include characters that will be output (such as `1.` and `-` for lists)
   if (modeCfg.highlightFormatting === undefined)
@@ -31,9 +22,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   // Excess `>` will emit `error` token.
   if (modeCfg.maxBlockquoteDepth === undefined)
     modeCfg.maxBlockquoteDepth = 0;
-
-  if (modeCfg.fencedCodeBlockHighlighting === undefined)
-    modeCfg.fencedCodeBlockHighlighting = true;
 
   // Allow token types to be overridden by user-provided token types.
   if (modeCfg.tokenTypeOverrides === undefined)
@@ -230,11 +218,10 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     } else if (firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(fencedCodeRE, true))) {
       state.udonParseError = (stream.column() != 0) || (match[2].length > 0); // ~udon - XX what about indentation?
       state.quote = 0;
+// ~udon
 //    state.fencedEndRE = new RegExp(match[1] + "+ *$"); // markdown
       state.fencedEndRE = fencedCodeRE;                  // udon
       // try switching mode
-      state.localMode = modeCfg.fencedCodeBlockHighlighting && getMode(match[2]);
-      if (state.localMode) state.localState = CodeMirror.startState(state.localMode);
       state.f = state.block = local;
       if (modeCfg.highlightFormatting) state.formatting = "code-block";
       state.code = -1
@@ -284,7 +271,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       if (modeCfg.highlightFormatting) state.formatting = "code-block";
       var returnType;
       if (!hasExitedList) returnType = getType(state)
-      state.localMode = state.localState = null;
       state.block = blockNormal;
       state.f = inlineNormal;
       state.fencedEndRE = null;
@@ -292,8 +278,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       state.thisLine.fencedCodeEnd = true;
       if (hasExitedList) return switchBlock(stream, state, state.block);
       return returnType;
-    } else if (state.localMode) {
-      return state.localMode.token(stream, state.localState);
     } else {
       stream.skipToEnd();
       return tokenTypes.code;
@@ -693,9 +677,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         block: s.block,
         indentation: s.indentation,
 
-        localMode: s.localMode,
-        localState: s.localMode ? CodeMirror.copyState(s.localMode, s.localState) : null,
-
         inline: s.inline,
         text: s.text,
         formatting: false,
@@ -740,7 +721,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         state.trailingSpace = 0;
         state.trailingSpaceNewLine = false;
 
-        if (!state.localState) {
+        if (true) {
           state.f = state.block;
           if (true) {
             var indentation = stream.match(/^\s*/, true)[0].replace(/\t/g, expandedTab).length;
@@ -754,12 +735,10 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     },
 
     innerMode: function(state) {
-      if (state.localState) return {state: state.localState, mode: state.localMode};
       return {state: state, mode: mode};
     },
 
     indent: function(state, textAfter, line) {
-      if (state.localState && state.localMode.indent) return state.localMode.indent(state.localState, textAfter, line)
       return CodeMirror.Pass
     },
 
