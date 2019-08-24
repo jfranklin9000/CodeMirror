@@ -59,7 +59,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       //
       // changed - don't use * or 1. as list item
 //,   listRE = /^(?:[*\-+]|^[0-9]+([.)]))\s+/ // markdown
-  ,   listRE = /^(?:[\-+])\s+/                // udon
+  ,   listRE = /^([\-+]) \n?/                 // udon - capture the hep or lus
       //
       // changed - require at least one space to be a header, and hax newline is not a header
 //,   atxHeaderRE = modeCfg.allowAtxHeaderWithoutSpace ? /^(#+)/ : /^(#+)(?: |$)/ // markdown
@@ -186,7 +186,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       stream.eatSpace();
       return getType(state);
     } else if (!isHr && firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(listRE))) {
-      var listType = match[1] ? "ol" : "ul";
+      var listType = (match[1] == '+') ? "ol" : "ul";
 
       state.indentation = lineIndentation + stream.current().length;
       state.list = true;
@@ -332,8 +332,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     if (typeof style !== 'undefined')
       return style;
 
-// no * for ~udon
-    if (state.list) { // List marker (*, +, -, 1., etc)
+    if (state.list) { // List marker (+ or -)
       state.list = null;
       return getType(state);
     }
