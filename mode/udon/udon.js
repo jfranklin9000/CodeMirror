@@ -66,8 +66,34 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 //,   atxHeaderRE = /^(#+)(?: (?! ))/                                             // udon - only one space
   ,   atxHeaderRE = /^(#+)(?: )/                                                  // udon - at least one space
       //
-      // no change
-  ,   textRE = /^[^#!\[\]*_\\<>` "'(~:]+/
+      // udon - hoon constant - ~2017.8.29
+      // try matching this before textRE so that
+      // date~2017.8.29 doesn't appear to partially match
+      // XX - probably doesn't match parser exactly - fix me
+  ,   dateRE = /^~\d+\.\d+\.\d+(?: |$)/
+      //
+      // udon - hoon constant - 0xdead.beef
+      // try matching this before textRE so that
+      // hex0xdead.beef doesn't appear to partially match
+      // XX - probably doesn't match parser exactly - fix me
+  ,   hexRE = /^0x[0-9a-z]+(?:\.[0-9a-z]+)*(?: |$)/
+      //
+      // udon - hoon constant - %term
+      // try matching this before textRE so that
+      // term%term doesn't appear to partially match
+  ,   termRE = /^%[a-z][a-z\-]*(?: |$)/
+      //
+      // udon - hoon constant - ~zod
+      // try matching this before textRE so that
+      // zod~zod doesn't appear to partially match
+      // XX - probably doesn't match parser exactly - fix me
+      // (regex won't be able to handle this)
+  ,   patpRE = /^~[a-z]+(?:\-[a-z]+)*(?: |$)/
+      //
+      // changed - don't exclude ~
+      // match dateRE, hexRE, termRE, and patpRE first
+//,   textRE = /^[^#!\[\]*_\\<>` "'(~:]+/ // markdown
+  ,   textRE = /^[^#!\[\]*_\\<>` "'(:]+/  // udon
       //
       // changed - don't allow ~~~ for code fencing
 //,   fencedCodeRE = /^(~~~+|```+)[ \t]*([\w+#-]*)[^\n`]*$/ // markdown
@@ -321,7 +347,18 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   }
 
   function handleText(stream, state) {
-    if (stream.match(textRE, true)) {
+// ~udon start
+    if (stream.match(dateRE) || stream.match(hexRE) || stream.match(termRE) || stream.match(patpRE)) {
+      if (modeCfg.highlightFormatting) state.formatting = "code";
+      var code = state.code;
+      state.code = true;
+      var t = getType(state);
+      state.code = code;
+      // update state.formatting?
+      return t;
+    }
+// ~udon end
+    if (stream.match(textRE)) {
       return getType(state);
     }
     return undefined;
@@ -412,10 +449,10 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       return type;
     }
 
-    if (ch === "*" || ch === "_") {
+    if (ch === '*' || ch === '_') {
 // ~udon start
       var setEm = null, setStrong = null
-      if (ch === "_") setEm = !state.em // Em
+      if (ch === '_') setEm = !state.em // Em
       else setStrong = !state.strong // Strong
       // modeCfg.highlightFormatting (which is not enabled) may not be correct here (just move it down?)
       if (modeCfg.highlightFormatting)
@@ -466,17 +503,17 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     }
     var ch = stream.next();
     if (ch === '(' || ch === '[') {
-      state.f = state.inline = getLinkHrefInside(ch === "(" ? ")" : "]");
+      state.f = state.inline = getLinkHrefInside(ch === '(' ? ')' : ']');
       if (modeCfg.highlightFormatting) state.formatting = "link-string";
       state.linkHref = true;
       return getType(state);
     }
-    return 'error';
+    return "error";
   }
 
   var linkRE = {
-    ")": /^(?:[^\\\(\)]|\\.|\((?:[^\\\(\)]|\\.)*\))*?(?=\))/,
-    "]": /^(?:[^\\\[\]]|\\.|\[(?:[^\\\[\]]|\\.)*\])*?(?=\])/
+    ')': /^(?:[^\\\(\)]|\\.|\((?:[^\\\(\)]|\\.)*\))*?(?=\))/,
+    ']': /^(?:[^\\\[\]]|\\.|\[(?:[^\\\[\]]|\\.)*\])*?(?=\])/
   }
 
   function getLinkHrefInside(endChar) {
