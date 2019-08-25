@@ -154,7 +154,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     var prevLineLineIsEmpty = lineIsEmpty(state.prevLine.stream);
     var prevLineIsHr = state.prevLine.hr;
     var prevLineIsList = state.list !== false;
-    var maxNonCodeIndentation = (state.listStack[state.listStack.length - 1] || 0) + 3;
 
     var lineIndentation = state.indentation;
     // compute once per line (on first token)
@@ -186,15 +185,12 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       }
     }
 
-    var isHr = (state.list === false || prevLineIsHr || prevLineLineIsEmpty) &&
-      state.indentation <= maxNonCodeIndentation && stream.match(hrRE);
+    var isHr = (state.list === false || prevLineIsHr || prevLineLineIsEmpty) && stream.match(hrRE);
 
     var match = null;
     if (stream.eatSpace()) {
       return null;
-// ~udon
-//  } else if (firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(atxHeaderRE)) && match[1].length <= 6) {
-    } else if (firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(atxHeaderRE))) {
+    } else if (firstTokenOnLine && (match = stream.match(atxHeaderRE))) {
       state.udonParseError = (stream.column() != 0) || (match[1].length > 6); // ~udon - XX what about indentation?
       state.quote = 0;
       state.header = match[1].length;
@@ -202,12 +198,12 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       if (modeCfg.highlightFormatting) state.formatting = "header";
       state.f = state.inline;
       return getType(state);
-    } else if (state.indentation <= maxNonCodeIndentation && stream.eat('>')) {
+    } else if (stream.eat('>')) {
       state.quote = firstTokenOnLine ? 1 : state.quote + 1;
       if (modeCfg.highlightFormatting) state.formatting = "quote";
       stream.eatSpace();
       return getType(state);
-    } else if (!isHr && firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(listRE))) {
+    } else if (!isHr && firstTokenOnLine && (match = stream.match(listRE))) {
       var listType = (match[1] == '+') ? "ol" : "ul";
 
       state.indentation = lineIndentation + stream.current().length;
@@ -220,7 +216,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       state.f = state.inline;
       if (modeCfg.highlightFormatting) state.formatting = ["list", "list-" + listType];
       return getType(state);
-    } else if (firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(fencedCodeRE))) {
+    } else if (firstTokenOnLine && (match = stream.match(fencedCodeRE))) {
       state.udonParseError = (stream.column() != 0) || (match[1].length > 0); // ~udon - XX what about indentation?
       state.quote = 0;
 // ~udon
@@ -246,8 +242,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     var hasExitedList = state.indentation < currListInd;
     var maxFencedEndInd = currListInd + 3;
     var match; // ~udon
-//  if (state.fencedEndRE && state.indentation <= maxFencedEndInd && (hasExitedList || stream.match(state.fencedEndRE))) {           // markdown
-    if (state.fencedEndRE && state.indentation <= maxFencedEndInd && (hasExitedList || (match = stream.match(state.fencedEndRE)))) { // udon
+    if (state.fencedEndRE && state.indentation <= maxFencedEndInd && (hasExitedList || (match = stream.match(state.fencedEndRE)))) {
       state.udonParseError = (stream.column() != 0) || (match[1].length > 0); // ~udon - XX what about indentation? hasExitedList?
       if (modeCfg.highlightFormatting) state.formatting = "code-block";
       var returnType;
