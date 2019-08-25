@@ -42,7 +42,8 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     linkText: "link",
     linkHref: "string",
     em: "em",
-    strong: "strong"
+    strong: "strong",
+    error: "error" // udon
   };
 
   for (var tokenType in tokenTypes) {
@@ -55,7 +56,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   var
       // changed - don't use * or _ as horizontal rule
 //    hrRE = /^([*\-_])(?:\s*\1){2,}\s*$/ // markdown
-      hrRE = /^(\-)(?:\s*\1){2,}\s*$/     // udon
+      hrRE = /^\-\-\-+(.*)$/              // udon - match more than ---
       //
       // changed - don't use * or 1. as list item
 //,   listRE = /^(?:[*\-+]|^[0-9]+([.)]))\s+/ // markdown
@@ -184,8 +185,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       }
     }
 
-    var isHr = (state.list === false) && stream.match(hrRE);
-
     var match = null;
     if (stream.eatSpace()) {
       return null;
@@ -202,7 +201,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       if (modeCfg.highlightFormatting) state.formatting = "quote";
       stream.eatSpace();
       return getType(state);
-    } else if (!isHr && firstTokenOnLine && (match = stream.match(listRE))) {
+    } else if (firstTokenOnLine && (match = stream.match(listRE))) {
       var listType = (match[1] == '+') ? "ol" : "ul";
 
       state.indentation = lineIndentation + stream.current().length;
@@ -226,11 +225,10 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       if (modeCfg.highlightFormatting) state.formatting = "code-block";
       state.code = -1
       return getType(state);
-    } else if (isHr) {
-      stream.skipToEnd();
+    } else if ((match = stream.match(hrRE))) {
       state.hr = true;
       state.thisLine.hr = true;
-      return tokenTypes.hr;
+      return (match[1].length == 0) ? tokenTypes.hr : tokenTypes.error;
     }
 
     return switchInline(stream, state, state.inline);
@@ -643,13 +641,13 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     blockCommentStart: "<!--",
     blockCommentEnd: "-->",
     closeBrackets: "()[]{}''\"\"``",
-    fold: "markdown"                                     // ~udon?
+    fold: "udon"
   };
   return mode;
 }, "xml");
 
-CodeMirror.defineMIME("text/markdown", "markdown");      // ~udon?
+CodeMirror.defineMIME("text/udon", "udon");
 
-CodeMirror.defineMIME("text/x-markdown", "markdown");    // ~udon?
+CodeMirror.defineMIME("text/x-udon", "udon");
 
 });
