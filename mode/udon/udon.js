@@ -140,8 +140,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     state.lastEmOrStrong = null; // ~udon
     // Reset state.quote
     state.quote = 0;
-    // Reset state.indentedCode
-    state.indentedCode = false;
     // Reset state.trailingSpace
     state.trailingSpace = 0;
     state.trailingSpaceNewLine = false;
@@ -154,12 +152,9 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   function blockNormal(stream, state) {
     var firstTokenOnLine = stream.column() === state.indentation;
     var prevLineLineIsEmpty = lineIsEmpty(state.prevLine.stream);
-    var prevLineIsIndentedCode = state.indentedCode;
     var prevLineIsHr = state.prevLine.hr;
     var prevLineIsList = state.list !== false;
     var maxNonCodeIndentation = (state.listStack[state.listStack.length - 1] || 0) + 3;
-
-    state.indentedCode = false;
 
     var lineIndentation = state.indentation;
     // compute once per line (on first token)
@@ -195,12 +190,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       state.indentation <= maxNonCodeIndentation && stream.match(hrRE);
 
     var match = null;
-    if (state.indentationDiff >= 4 && (prevLineIsIndentedCode || state.prevLine.fencedCodeEnd ||
-         state.prevLine.header || prevLineLineIsEmpty)) {
-      stream.skipToEnd();
-      state.indentedCode = true;
-      return tokenTypes.code;
-    } else if (stream.eatSpace()) {
+    if (stream.eatSpace()) {
       return null;
 // ~udon
 //  } else if (firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(atxHeaderRE)) && match[1].length <= 6) {
@@ -604,7 +594,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
         list: s.list,
         listStack: s.listStack.slice(0),
         quote: s.quote,
-        indentedCode: s.indentedCode,
         trailingSpace: s.trailingSpace,
         trailingSpaceNewLine: s.trailingSpaceNewLine,
         fencedEndRE: s.fencedEndRE
