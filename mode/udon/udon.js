@@ -66,6 +66,12 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 //,   atxHeaderRE = /^(#+)(?: (?! ))/                                             // udon - only one space
   ,   atxHeaderRE = /^(#+)(?: )/                                                  // udon - at least one space
       //
+      // udon - hoon arm - ++arm:core
+      // try matching this before textRE so that
+      // arm++arm:core doesn't appear to partially match
+      // (XX - actually, we want "partial" match - fix me)
+  ,   armRE = /^\+[\+\-\$\*](?:(?:[a-z]+\-*)+\:*)+(?: |$)/
+      //
       // udon - hoon constant - ~2017.8.29
       // try matching this before textRE so that
       // date~2017.8.29 doesn't appear to partially match
@@ -91,13 +97,13 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   ,   patpRE = /^~[a-z]+(?:\-[a-z]+)*(?: |$)/
       //
       // changed - don't exclude ~
-      // match dateRE, hexRE, termRE, and patpRE first
+      // match armRE, dateRE, hexRE, termRE, patpRE first
 //,   textRE = /^[^#!\[\]*_\\<>` "'(~:]+/ // markdown
   ,   textRE = /^[^#!\[\]*_\\<>` "'(:]+/  // udon
       //
       // changed - don't allow ~~~ for code fencing
 //,   fencedCodeRE = /^(~~~+|```+)[ \t]*([\w+#-]*)[^\n`]*$/ // markdown
-  ,   fencedCodeRE = /^(```)(.*)$/                          // udon - match more than ``` so we can error on ```json
+  ,   fencedCodeRE = /^```(.*)$/                            // udon - match more than ```
       //
       // no change
   ,   expandedTab = "    " // CommonMark specifies tab as 4 spaces
@@ -224,8 +230,8 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       state.f = state.inline;
       if (modeCfg.highlightFormatting) state.formatting = ["list", "list-" + listType];
       return getType(state);
-    } else if (firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(fencedCodeRE, true))) {
-      state.udonParseError = (stream.column() != 0) || (match[2].length > 0); // ~udon - XX what about indentation?
+    } else if (firstTokenOnLine && state.indentation <= maxNonCodeIndentation && (match = stream.match(fencedCodeRE))) {
+      state.udonParseError = (stream.column() != 0) || (match[1].length > 0); // ~udon - XX what about indentation?
       state.quote = 0;
 // ~udon
 //    state.fencedEndRE = new RegExp(match[1] + "+ *$"); // markdown
@@ -250,9 +256,9 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     var hasExitedList = state.indentation < currListInd;
     var maxFencedEndInd = currListInd + 3;
     var match; // ~udon
-//  if (state.fencedEndRE && state.indentation <= maxFencedEndInd && (hasExitedList || stream.match(state.fencedEndRE))) {
-    if (state.fencedEndRE && state.indentation <= maxFencedEndInd && (hasExitedList || (match = stream.match(state.fencedEndRE)))) { // ~udon
-      state.udonParseError = (stream.column() != 0) || (match[2].length > 0); // ~udon - XX what about indentation? hasExitedList?
+//  if (state.fencedEndRE && state.indentation <= maxFencedEndInd && (hasExitedList || stream.match(state.fencedEndRE))) {           // markdown
+    if (state.fencedEndRE && state.indentation <= maxFencedEndInd && (hasExitedList || (match = stream.match(state.fencedEndRE)))) { // udon
+      state.udonParseError = (stream.column() != 0) || (match[1].length > 0); // ~udon - XX what about indentation? hasExitedList?
       if (modeCfg.highlightFormatting) state.formatting = "code-block";
       var returnType;
       if (!hasExitedList) returnType = getType(state)
@@ -348,7 +354,9 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 
   function handleText(stream, state) {
 // ~udon start
-    if (stream.match(dateRE) || stream.match(hexRE) || stream.match(termRE) || stream.match(patpRE)) {
+    if (stream.match(armRE) || stream.match(dateRE) ||
+        stream.match(hexRE) || stream.match(termRE) ||
+        stream.match(patpRE)) {
       if (modeCfg.highlightFormatting) state.formatting = "code";
       var code = state.code;
       state.code = true;
