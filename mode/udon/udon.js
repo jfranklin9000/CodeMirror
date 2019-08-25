@@ -152,7 +152,6 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
   function blockNormal(stream, state) {
     var firstTokenOnLine = stream.column() === state.indentation;
     var prevLineLineIsEmpty = lineIsEmpty(state.prevLine.stream);
-    var prevLineIsHr = state.prevLine.hr;
     var prevLineIsList = state.list !== false;
 
     var lineIndentation = state.indentation;
@@ -185,7 +184,7 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
       }
     }
 
-    var isHr = (state.list === false || prevLineIsHr || prevLineLineIsEmpty) && stream.match(hrRE);
+    var isHr = (state.list === false) && stream.match(hrRE);
 
     var match = null;
     if (stream.eatSpace()) {
