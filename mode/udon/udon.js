@@ -152,8 +152,17 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 
   function blockNormal(stream, state) {
     var firstTokenOnLine = stream.column() === state.indentation;
-    var prevLineLineIsEmpty = lineIsEmpty(state.prevLine.stream);
     var prevLineIsList = state.list !== false;
+
+    // udon - headers need to be followed by a blank line;
+    //        this may be a udon parser bug, kind of like
+    //        https://github.com/urbit/urbit/issues/1558
+    //        XX this code does not catch the case of a
+    //        fenced code block that directly follows a
+    //        header.. are there more cases? - fix me
+    if (state.prevLine.header === true && !lineIsEmpty(state.thisLine.stream)) {
+      state.udonParseError = true;
+    }
 
     var lineIndentation = state.indentation;
     // compute once per line (on first token)
@@ -638,9 +647,8 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
 
     getType: getType,
 
-    blockCommentStart: "<!--",
-    blockCommentEnd: "-->",
     closeBrackets: "()[]{}''\"\"``",
+
     fold: "udon"
   };
   return mode;
