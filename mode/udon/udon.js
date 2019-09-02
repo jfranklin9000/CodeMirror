@@ -210,7 +210,8 @@ CodeMirror.defineMode("udon", function(cmCfg, modeCfg) {
     var match = null;
     if (stream.eatSpace()) {
       return null;
-    } else if (firstTokenOnLine && state.listStack.length == 0 && stream.column() == 8) { // ~udon - poem
+    } else if (firstTokenOnLine && state.listStack.length == 0
+        && state.quote == 0 && stream.column() == 8) { // ~udon - poem
       state.quote = 0;
       stream.match(/^.*$/); // match rest of line
       state.poem = true;
